@@ -4,12 +4,16 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import danbroid.touchprompt.touchPrompt
 import kotlinx.android.synthetic.main.activity_main.*
-
+import danbroid.touchprompt.touchPrompt
 
 class MainActivity : AppCompatActivity() {
 
+  companion object {
+    init {
+      danbroid.touchprompt.install()
+    }
+  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     log.info("onCreate()")
@@ -27,7 +31,6 @@ class MainActivity : AppCompatActivity() {
         initialDelay = 2000
       }
     }
-
 
 
   }

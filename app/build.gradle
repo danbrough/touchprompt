@@ -57,5 +57,5 @@ dependencies {
   implementation "com.squareup.moshi:moshi-kotlin:1.6.0"*/
 
 
-  implementation project(':touchprompt')
+  implementation project(':mtt')
 }

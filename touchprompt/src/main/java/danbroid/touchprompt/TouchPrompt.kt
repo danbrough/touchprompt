@@ -15,6 +15,15 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import java.lang.ref.WeakReference
 
+
+private var IMPL_CREATOR: ((TouchPrompt) -> TouchPromptImpl)? = null
+
+
+fun installCreator(creator: ((TouchPrompt) -> TouchPromptImpl)) {
+  IMPL_CREATOR = creator
+}
+
+
 fun Fragment.touchPrompt(
   singleShotID: Any? = null,
   mode: TouchPromptMode = TouchPromptMode.ACTIVITY,
@@ -140,7 +149,7 @@ class TouchPrompt(
 
   }
 
-  internal fun postInit(): TouchPrompt {
+  fun postInit(): TouchPrompt {
     init.invoke(this)
 
     if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
@@ -188,7 +197,9 @@ class TouchPrompt(
 
     if (onShow?.invoke() == false) return showNext()
 
-    impl = createImpl(this)
+
+    impl = IMPL_CREATOR?.invoke(this)
+      ?: throw RuntimeException("Library not initialized. Have you called danbroid.touchprompt.install()?")
 
     impl?.show()
   }
