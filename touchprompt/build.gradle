@@ -28,6 +28,10 @@ android {
     }
   }
 
+  defaultPublishConfig "mttRelease"
+  // true to publish all flavour artifacts
+  publishNonDefault false
+
   flavorDimensions "version"
 
 /*
