@@ -8,7 +8,7 @@ import android.widget.Button
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.fragment.app.Fragment
 
-open class BaseFragment(val title:String) : Fragment() {
+open class BaseFragment(val title: String) : Fragment() {
 
   protected lateinit var tests: ViewGroup
 
@@ -21,11 +21,11 @@ open class BaseFragment(val title:String) : Fragment() {
     tests = it
   }
 
-  protected fun addTest(title: String, action: (View) -> Unit) =
+  protected fun addTest(title: String, action: ((View) -> Unit)? = null): View =
     Button(context).apply {
       text = title
       setOnClickListener {
-        action.invoke(it)
+        action?.invoke(it)
       }
     }.also {
       tests.addView(it)

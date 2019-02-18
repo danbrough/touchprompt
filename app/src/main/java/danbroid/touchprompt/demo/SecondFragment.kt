@@ -10,7 +10,7 @@ class SecondFragment : BaseFragment("Second Fragment") {
     tests.setOnTouchListener { v, event ->
       touchPrompt {
         primaryText = "Clicked at ${event.x},${event.y}"
-        targetLocation = Pair(event.x, event.y)
+        targetPos = Pair(event.x, event.y)
       }
       true
     }

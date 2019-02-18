@@ -28,6 +28,22 @@ android {
     }
   }
 
+  flavorDimensions "version"
+
+/*
+  buildTypes {
+    debug {
+    }
+    release {
+    }
+  }
+*/
+
+  productFlavors {
+    mtt {
+      dimension = 'version'
+    }
+  }
 }
 
 dependencies {
@@ -39,6 +55,6 @@ dependencies {
   implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
   implementation "org.slf4j:slf4j-api:1.7.25"
 
-  implementation 'uk.co.samuelwall:material-tap-target-prompt:2.14.0'
+  mttImplementation 'uk.co.samuelwall:material-tap-target-prompt:2.14.0'
 }
 
