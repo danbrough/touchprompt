@@ -3,6 +3,8 @@ package danbroid.touchprompt.demo
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import danbroid.touchprompt.TouchPrompt
+import danbroid.touchprompt.TouchPromptMode
 import danbroid.touchprompt.touchPrompt
 import java.util.concurrent.TimeUnit
 
@@ -14,18 +16,21 @@ class FirstFragment : BaseFragment("First Fragment") {
 
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-    addTest("Test 1") {
-      Toast.makeText(context, "Test1", Toast.LENGTH_SHORT).show()
-    }.run {
-      touchPrompt {
-        target = this@run
-        primaryText = "TEst1"
+    addTest("Prompt after 2 Seconds") {
+      Toast.makeText(context, "Cheers", Toast.LENGTH_SHORT).show()
+    }.also { testButton ->
+
+      touchPrompt(SingleShot.TWO_SECOND_PROMPT) {
+        target = testButton
+        primaryText = "This is a button"
+        secondaryText = "When you click it it will display a toast.\nIt will not display again"
         initialDelay = TimeUnit.SECONDS.toMillis(2)
       }
+
     }
 
     addTest("Fragment Prompt") {
-      touchPrompt {
+      touchPrompt(mode = TouchPromptMode.FRAGMENT) {
         target = it
         primaryText = "Fragment Touch Prompt"
       }
@@ -33,7 +38,7 @@ class FirstFragment : BaseFragment("First Fragment") {
 
     addTest("Chain Test") {
 
-      touchPrompt(SingleShot.TEST1) {
+      touchPrompt {
         target = it
         primaryText = "First Prompt"
       }
@@ -56,15 +61,18 @@ class FirstFragment : BaseFragment("First Fragment") {
         .addToBackStack(null)
         .commit()
     }
+
+    addTest("Reset single shots") {
+      TouchPrompt.clearPrefs(context!!)
+      activity!!.run {
+        finish()
+        startActivity(intent)
+      }
+    }
+
+
   }
 
-  override fun onResume() {
-    super.onResume()
-    touchPrompt {
-      initialDelay = 2000
-      primaryTextID = R.string.msg_delayed_prompt
-    }
-  }
 }
 
 

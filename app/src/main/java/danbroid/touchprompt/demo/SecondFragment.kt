@@ -7,7 +7,7 @@ import danbroid.touchprompt.touchPrompt
 class SecondFragment : BaseFragment("Second Fragment") {
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-    tests.setOnTouchListener { v, event ->
+    tests.setOnTouchListener { _, event ->
       touchPrompt {
         primaryText = "Clicked at ${event.x},${event.y}"
         targetPos = Pair(event.x, event.y)
@@ -19,11 +19,6 @@ class SecondFragment : BaseFragment("Second Fragment") {
       target = tests
       primaryText = "Touch anywhere here to display a prompt"
     }
-
-    addTest("Second Fragment") {
-
-    }
-
 
   }
 }

@@ -7,7 +7,6 @@ import danbroid.touchprompt.TouchPromptMode
 import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt
 
 
-
 class MTTImpl(prompt: TouchPrompt) : TouchPromptImpl(prompt),
   MaterialTapTargetPrompt.PromptStateChangeListener {
 
@@ -25,6 +24,9 @@ class MTTImpl(prompt: TouchPrompt) : TouchPromptImpl(prompt),
         prompt.activity ?: prompt.fragment?.activity!!
       )
     }
+
+
+    builder.setAutoFinish(true)
 
     prompt.primaryText?.also {
       builder.primaryText = prompt.primaryText
@@ -93,13 +95,17 @@ class MTTImpl(prompt: TouchPrompt) : TouchPromptImpl(prompt),
       }
       MaterialTapTargetPrompt.STATE_FINISHED -> {
         log.trace("STATE_FINISHED")
+        prompt.onShown?.invoke()
+        prompt.markShown()
       }
       MaterialTapTargetPrompt.STATE_DISMISSING -> {
         log.trace("STATE_DISMISSING")
       }
       MaterialTapTargetPrompt.STATE_DISMISSED -> {
         log.trace("STATE_DISMISSED")
+        prompt.onShown?.invoke()
         prompt.markShown()
+
       }
     }
   }

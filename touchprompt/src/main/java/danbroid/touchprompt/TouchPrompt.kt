@@ -16,19 +16,20 @@ import androidx.lifecycle.OnLifecycleEvent
 import java.lang.ref.WeakReference
 
 
-private var IMPL_CREATOR: ((TouchPrompt) -> TouchPromptImpl)? = null
-
-
-fun installCreator(creator: ((TouchPrompt) -> TouchPromptImpl)) {
-  IMPL_CREATOR = creator
+interface TouchPromptFactory {
+  fun create(prompt: TouchPrompt): TouchPromptImpl
 }
 
+var FACTORY_CLASS_NAME = "danbroid.touchprompt.Factory"
+
+internal lateinit var FACTORY: TouchPromptFactory
 
 fun Fragment.touchPrompt(
   singleShotID: Any? = null,
   mode: TouchPromptMode = TouchPromptMode.ACTIVITY,
   init: (TouchPrompt.() -> Unit)
 ): TouchPrompt? {
+
   if (TouchPrompt.hasSingleShotRun(singleShotID, this.context!!)) return null
 
   return TouchPrompt(
@@ -64,24 +65,34 @@ enum class TouchPromptMode {
 class TouchPrompt(
 
   var mode: TouchPromptMode = TouchPromptMode.ACTIVITY,
+
   var activity: ComponentActivity? = null,
+
   var fragment: Fragment? = null,
+
   var singleShotID: String? = null,
+
   var lifecycle: Lifecycle,
+
   private var init: (TouchPrompt.() -> Unit)
 
 ) : LifecycleObserver {
 
+  /** Primary text to display on the prompt **/
   var primaryText: String? = null
   @StringRes
   var primaryTextID: Int? = null
 
+  /** Secondary text to display on the prompt **/
   var secondaryText: String? = null
+
   @StringRes
   var secondaryTextID: Int? = null
 
+  /** Delay this many millis before showing the prompt **/
   var initialDelay: Long? = null
 
+  /** Sets the initialDelay property with a small value **/
   fun setShortInitialDelay() {
     initialDelay = 500L
   }
@@ -101,6 +112,10 @@ class TouchPrompt(
    */
   var onShow: (() -> Boolean)? = null
 
+
+  /** Invoked after the prompt has been dismissed but the its is still active **/
+  var onShown: (() -> Unit)? = null
+
   /**
    * Only show this prompt if no other serial prompts are showing
    */
@@ -111,13 +126,18 @@ class TouchPrompt(
   val context: Context
     get() = fragment?.context ?: activity!!
 
-  var impl: TouchPromptImpl? = null
+  internal var impl: TouchPromptImpl? = null
 
   var native: ((TouchPromptImpl) -> Unit)? = null
 
   private var cancelled = false
 
   companion object {
+
+    init {
+      FACTORY = Class.forName(FACTORY_CLASS_NAME).newInstance() as TouchPromptFactory
+    }
+
     var PREFS_FILE = "touch_prompt"
 
     fun getPrefs(context: Context) = context.getSharedPreferences(PREFS_FILE, Context.MODE_PRIVATE)
@@ -164,7 +184,7 @@ class TouchPrompt(
 
   @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
   fun startShow() {
-    log.trace("startShow() currentPrompt:$currentPrompt")
+    log.trace("startShow() currentPrompt:${currentPrompt?.get()}")
 
     if (serial) {
       currentPrompt?.get()?.also {
@@ -176,7 +196,7 @@ class TouchPrompt(
         p.nextPrompt = this@TouchPrompt
         return
       } ?: run {
-        log.debug("setting current prompt")
+        log.trace("setting current prompt")
         currentPrompt = WeakReference(this@TouchPrompt)
       }
     }
@@ -198,8 +218,7 @@ class TouchPrompt(
     if (onShow?.invoke() == false) return showNext()
 
 
-    impl = IMPL_CREATOR?.invoke(this)
-      ?: throw RuntimeException("Library not initialized. Have you called danbroid.touchprompt.install()?")
+    impl = FACTORY.create(this)
 
     impl?.show()
   }

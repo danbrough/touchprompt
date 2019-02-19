@@ -4,16 +4,15 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.activity_main.*
 import danbroid.touchprompt.touchPrompt
+import kotlinx.android.synthetic.main.activity_main.*
+
+enum class SingleShot {
+  TWO_SECOND_PROMPT, TEST1, FRAGMENT2_TOUCH_HERE, FAB
+}
+
 
 class MainActivity : AppCompatActivity() {
-
-  companion object {
-    init {
-      danbroid.touchprompt.install()
-    }
-  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     log.info("onCreate()")
@@ -26,10 +25,15 @@ class MainActivity : AppCompatActivity() {
 
     fab.setOnClickListener {
       touchPrompt {
-        title = "This is the FAB!"
+        primaryText = "This is the FAB!"
         targetID = R.id.fab
-        initialDelay = 2000
       }
+    }
+
+    touchPrompt(SingleShot.FAB) {
+      primaryText = "Click here for a prompt"
+      secondaryTextID = R.string.msg_i_wont_appear_again
+      targetID = R.id.fab
     }
 
 
@@ -51,11 +55,14 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
+  override fun onBackPressed() {
+    if (supportFragmentManager.backStackEntryCount > 1) {
+      supportFragmentManager.popBackStack()
+      return
+    }
+    super.onBackPressed()
+  }
 }
 
 private val log = org.slf4j.LoggerFactory.getLogger(MainActivity::class.java)
-
-enum class SingleShot {
-  TEST1, FRAGMENT2_TOUCH_HERE
-}
 

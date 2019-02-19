@@ -1,5 +1,7 @@
 <resources>
-  <string name="app_name">TouchPrompt3</string>
+  <string name="app_name">TouchPrompt Facade Demo</string>
   <string name="action_settings">Settings</string>
   <string name="msg_delayed_prompt">Delayed Prompt</string>
+  <string name="lbl_search">Search</string>
+  <string name="msg_i_wont_appear_again">I wont appear again</string>
 </resources>
