@@ -26,14 +26,31 @@ class MainActivity : AppCompatActivity() {
     fab.setOnClickListener {
       touchPrompt {
         primaryText = "This is the FAB!"
+        secondaryText = "Will disappear in 2 seconds"
         targetID = R.id.fab
+        showFor = 2000
+        it.autoDismiss = false
+        it.autoFinish = false
+        it.captureTouchEventOutsidePrompt = true
       }
     }
 
-    touchPrompt(SingleShot.FAB) {
-      primaryText = "Click here for a prompt"
-      secondaryTextID = R.string.msg_i_wont_appear_again
+    touchPrompt {
+      primaryText = "This is the search button"
+      targetID = R.id.action_search
+    }
+
+
+    touchPrompt(SingleShot.TWO_SECOND_PROMPT) {
+      primaryText = "Delayed Prompt: Click here for more!"
+      setSecondaryText(R.string.msg_i_wont_appear_again)
       targetID = R.id.fab
+      initialDelay = 2000
+      it.autoDismiss = false
+      it.autoFinish = false
+      onFocalPressed = {
+        dismiss()
+      }
     }
 
 

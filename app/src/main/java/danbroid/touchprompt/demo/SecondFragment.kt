@@ -2,6 +2,8 @@ package danbroid.touchprompt.demo
 
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
+import android.widget.TextView
 import danbroid.touchprompt.touchPrompt
 
 class SecondFragment : BaseFragment("Second Fragment") {
@@ -10,9 +12,15 @@ class SecondFragment : BaseFragment("Second Fragment") {
     tests.setOnTouchListener { _, event ->
       touchPrompt {
         primaryText = "Clicked at ${event.x},${event.y}"
-        targetPos = Pair(event.x, event.y)
+        setTargetPosition(event.x, event.y)
       }
       true
+    }
+
+    TextView(context).run {
+      layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 120)
+      text = "The Second Fragment"
+      tests.addView(this)
     }
 
     touchPrompt(SingleShot.FRAGMENT2_TOUCH_HERE) {
