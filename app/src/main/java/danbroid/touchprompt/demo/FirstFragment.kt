@@ -30,6 +30,7 @@ class FirstFragment : BaseFragment("First Fragment") {
     }
 
     addTest("Fragment Prompt") {
+      log.trace("showing fragment prompt")
       touchPrompt(mode = TouchPromptMode.FRAGMENT) {
         target = it
         primaryText = "Fragment Touch Prompt"
@@ -64,9 +65,9 @@ class FirstFragment : BaseFragment("First Fragment") {
 
     addTest("Reset single shots") {
       TouchPrompt.clearPrefs(context!!)
-      activity!!.run {
-        finish()
-        startActivity(intent)
+      activity?.finish()
+      activity?.findViewById<View>(android.R.id.content)?.post {
+        activity?.startActivity(activity!!.intent)
       }
     }
 

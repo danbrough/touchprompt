@@ -8,7 +8,7 @@ android {
 
   defaultConfig {
     applicationId "danbroid.touchprompt.demo"
-    minSdkVersion 18
+    minSdkVersion min_sdk_version
     targetSdkVersion sdk_version
     versionCode 3
     versionName "1.0"

@@ -95,7 +95,6 @@ class MTTImpl(prompt: TouchPrompt) : TouchPromptImpl(prompt),
       }
       MaterialTapTargetPrompt.STATE_FINISHED -> {
         log.trace("STATE_FINISHED")
-        prompt.onShown?.invoke()
         prompt.markShown()
       }
       MaterialTapTargetPrompt.STATE_DISMISSING -> {
@@ -103,7 +102,6 @@ class MTTImpl(prompt: TouchPrompt) : TouchPromptImpl(prompt),
       }
       MaterialTapTargetPrompt.STATE_DISMISSED -> {
         log.trace("STATE_DISMISSED")
-        prompt.onShown?.invoke()
         prompt.markShown()
 
       }

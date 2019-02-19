@@ -58,6 +58,7 @@ fun ComponentActivity.touchPrompt(
   ).postInit()
 }
 
+
 enum class TouchPromptMode {
   FRAGMENT, ACTIVITY
 }
@@ -121,8 +122,6 @@ class TouchPrompt(
    */
   var serial: Boolean = true
 
-  private var nextPrompt: TouchPrompt? = null
-
   val context: Context
     get() = fragment?.context ?: activity!!
 
@@ -133,6 +132,11 @@ class TouchPrompt(
   private var cancelled = false
 
   companion object {
+
+/*    private val fragmentPrompts = WeakHashMap<Fragment, TouchPrompt>()
+    private val activityPrompts = WeakHashMap<ComponentActivity, TouchPrompt>()*/
+
+    var enabled = true
 
     init {
       FACTORY = Class.forName(FACTORY_CLASS_NAME).newInstance() as TouchPromptFactory
@@ -152,31 +156,25 @@ class TouchPrompt(
         if (!contains(singleShotID)) edit().putString(singleShotID, EMPTY_STRING).apply()
       }
 
-    private var currentPrompt: WeakReference<TouchPrompt>? = null
-
-    private fun showNext(context: Context) {
-      log.trace("showNext()")
-      currentPrompt?.get()?.also {
-        log.trace("found current prompt")
-        currentPrompt = null
-        it.nextPrompt?.run {
-          if (!hasSingleShotRun(singleShotID, context)) postInit()
-          else
-            nextPrompt?.postInit()
-        }
-      }
-    }
+    var currentPrompt: WeakReference<TouchPrompt>? = null
 
   }
 
+  private var nextPrompt: TouchPrompt? = null
+
   fun postInit(): TouchPrompt {
+    if (!TouchPrompt.enabled) return this
+
+    log.trace("postInit() $this")
+
     init.invoke(this)
 
-    if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
-      startShow()
-    } else {
-      lifecycle.addObserver(this)
-    }
+    /*   if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+         startShow()
+       }*/
+
+    lifecycle.addObserver(this)
+
 
     return this
   }
@@ -184,19 +182,30 @@ class TouchPrompt(
 
   @OnLifecycleEvent(Lifecycle.Event.ON_RESUME)
   fun startShow() {
-    log.trace("startShow() currentPrompt:${currentPrompt?.get()}")
+    log.trace("startShow() $this")
 
     if (serial) {
-      currentPrompt?.get()?.also {
-        log.info("existing prompt found")
-        var p = it
+      currentPrompt?.get()?.also { current ->
+        log.info("existing prompt found: $current with next: ${current.nextPrompt}")
+
+        var p = current
+        if (p == this@TouchPrompt) {
+          log.error("Prompt ${this@TouchPrompt} already in queue")
+          return
+        }
         while (p.nextPrompt != null) {
           p = p.nextPrompt!!
+          log.trace("p = p.nextPrompt!!")
+          if (p == this@TouchPrompt) {
+            log.error("Prompt ${this@TouchPrompt} already in queue")
+            return
+          }
         }
+
         p.nextPrompt = this@TouchPrompt
         return
       } ?: run {
-        log.trace("setting current prompt")
+        log.trace("setting current prompt to $singleShotID")
         currentPrompt = WeakReference(this@TouchPrompt)
       }
     }
@@ -211,46 +220,68 @@ class TouchPrompt(
     val state = lifecycle.currentState
     log.trace("show() cancelled:$cancelled state:$state")
 
+
+    if (fragment?.isVisible == false) {
+      log.warn("FRAGMENT IS INVISIBLE")
+      return showNext()
+    }
+
     if (cancelled) return showNext()
 
     if (!state.isAtLeast(Lifecycle.State.RESUMED)) return showNext()
 
     if (onShow?.invoke() == false) return showNext()
 
-
     impl = FACTORY.create(this)
 
     impl?.show()
   }
 
+  override fun toString(): String {
+    return "<${super.toString()} singleShot:${singleShotID} text:${primaryTextID?.let {
+      context.getString(
+        it
+      )
+    } ?: primaryText}>"
+  }
+
   private fun showNext() {
-    TouchPrompt.showNext(context)
+    log.trace("showNext() ${singleShotID}")
+
+    currentPrompt = null
+
+    if (serial && lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+      log.trace("is resumed")
+      nextPrompt?.run {
+        log.trace("found nextPrompt")
+        postInit()
+      }
+    }
   }
 
   @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-  fun onStop() {
-    currentPrompt = null
-    if (!cancelled)
-      cancel()
-  }
+  fun onStop() =
+    cancel()
 
-  fun cancel(all: Boolean = false) {
-    cancelled = true
-    impl?.dismiss()?.also {
-      impl = null
-    }
-    if (!all)
+  fun cancel() {
+    if (!cancelled) {
+      cancelled = true
+      impl?.dismiss()
       showNext()
+    }
   }
 
   fun markShown() {
 
     log.trace("markShown()")
+    onShown?.invoke()
+
     singleShotID?.run {
       TouchPrompt.markShown(context, this)
     }
 
-    showNext()
+    if (!cancelled)
+      showNext()
   }
 }
 
