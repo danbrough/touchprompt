@@ -3,6 +3,9 @@ touchprompt
 
 A kotlin facade for touchprompts.
 
+[![Release](https://jitpack.io/v/danbrough/touchprompt.svg)]
+(https://jitpack.io/#danbrough/touchprompt)
+
 Currently implemented by [MaterialTapTargetPrompt](https://github.com/sjwall/MaterialTapTargetPrompt)
 
 
