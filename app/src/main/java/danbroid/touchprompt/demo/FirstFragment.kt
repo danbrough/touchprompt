@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.Toast
 import danbroid.touchprompt.TouchPrompt
 import danbroid.touchprompt.touchPrompt
+import danbroid.touchprompt.touchSequence
 
 
 /**
@@ -48,8 +49,21 @@ class FirstFragment : BaseFragment("First Fragment") {
       }
     }
 
+    val doOnClick: (View.() -> View) = {
+      this
+    }
+    val b1 = addTest("B1").doOnClick()
+    val b2 = addTest("B2").doOnClick()
 
+    touchPrompt {
+      primaryText = "B1"
+      target = b1
+    }.touchPrompt {
+      primaryText = "B2"
+      target = b2
+    }
   }
+
 
 }
 

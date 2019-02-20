@@ -32,6 +32,7 @@ class MainActivity : AppCompatActivity() {
         it.autoDismiss = false
         it.autoFinish = false
         it.captureTouchEventOutsidePrompt = true
+        it.captureTouchEventOnFocal = true
       }
     }
 
