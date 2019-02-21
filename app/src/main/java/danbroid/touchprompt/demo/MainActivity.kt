@@ -23,16 +23,21 @@ class MainActivity : AppCompatActivity() {
 
     supportFragmentManager.beginTransaction().replace(R.id.fragment, FirstFragment()).commit()
 
+    supportFragmentManager.addOnBackStackChangedListener {
+      supportActionBar!!.setDisplayHomeAsUpEnabled(supportFragmentManager.backStackEntryCount > 0)
+    }
+
     fab.setOnClickListener {
       touchPrompt {
         primaryText = "This is the FAB!"
-        secondaryText = "Will disappear in 2 seconds"
+        secondaryText = "Will disappear in 2 seconds.\nUntil then you are stuck with it."
         targetID = R.id.fab
         showFor = 2000
         it.autoDismiss = false
         it.autoFinish = false
         it.captureTouchEventOutsidePrompt = true
         it.captureTouchEventOnFocal = true
+        serial = false
       }
     }
 
@@ -40,7 +45,6 @@ class MainActivity : AppCompatActivity() {
       primaryText = "This is the search button"
       targetID = R.id.action_search
     }
-
 
     touchPrompt(SingleShot.TWO_SECOND_PROMPT) {
       primaryText = "Delayed Prompt: Click here for more!"
@@ -69,6 +73,10 @@ class MainActivity : AppCompatActivity() {
     // as you specify a parent activity in AndroidManifest.xml.
     return when (item.itemId) {
       R.id.action_settings -> true
+      android.R.id.home -> {
+        onBackPressed()
+        true
+      }
       else -> super.onOptionsItemSelected(item)
     }
   }

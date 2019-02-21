@@ -5,29 +5,54 @@ import android.app.Activity
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.ComponentActivity
 import androidx.annotation.IdRes
 import androidx.annotation.StringRes
 import androidx.appcompat.widget.ActionMenuView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetPrompt
+import uk.co.samuelwall.materialtaptargetprompt.MaterialTapTargetSequence
 
 typealias TouchPromptInit = TouchPrompt.(MaterialTapTargetPrompt.Builder) -> Unit
 
 
-fun Activity.touchPrompt(singleShotID: Any? = null, init: TouchPromptInit) =
+fun ComponentActivity.touchPrompt(
+  singleShotID: Any? = null,
+  serial: Boolean = true,
+  init: TouchPromptInit
+) =
   showTouchPrompt(this, singleShotID, activity = this, init = init)
 
-fun Fragment.touchPrompt(singleShotID: Any? = null, init: TouchPromptInit) =
-  showTouchPrompt(context!!, singleShotID, fragment = this, init = init)
+fun Fragment.fragmentTouchPrompt(
+  singleShotID: Any? = null,
+  serial: Boolean = true,
+  init: TouchPromptInit
+) =
+  showTouchPrompt(context!!, singleShotID, fragment = this, serial = serial, init = init)
+
+
+fun Fragment.touchPrompt(singleShotID: Any? = null, serial: Boolean = true, init: TouchPromptInit) =
+  showTouchPrompt(context!!, singleShotID, activity = this.activity,fragment = this, serial = serial, init = init)
 
 var themeResourceID: Int = 0
+
+
+fun promptSequence(init: (MaterialTapTargetSequence) -> Unit): MaterialTapTargetSequence {
+  val sequence = MaterialTapTargetSequence()
+  init(sequence)
+  sequence.show()
+  return sequence
+}
 
 fun showTouchPrompt(
   context: Context,
   singleShotID: Any? = null,
-  activity: Activity? = null,
+  activity: ComponentActivity? = null,
   fragment: Fragment? = null,
+  serial: Boolean = true,
+  sequence: MaterialTapTargetSequence? = null,
   init: TouchPromptInit
 ): TouchPrompt? {
   if (TouchPrompt.singleShotDone(context, singleShotID?.toString())) return null
@@ -38,16 +63,16 @@ fun showTouchPrompt(
   val prompt = TouchPrompt(
     singleShotID?.toString(),
     context,
+    fragment?.lifecycle ?: activity!!.lifecycle,
+    serial,
+    sequence,
     builder,
     activity,
     fragment,
     init
   )
 
-  val view: View = activity?.findViewById(android.R.id.content) ?: fragment!!.view!!
-  view.post {
-    prompt.show()
-  }
+  prompt.show()
   return prompt
 }
 
@@ -55,9 +80,13 @@ fun showTouchPrompt(
 class TouchPrompt(
   var singleShotID: String?,
   var context: Context,
+  var lifecycle: Lifecycle,
+  var serial: Boolean = true,
+  var sequence: MaterialTapTargetSequence? = null,
   var builder: MaterialTapTargetPrompt.Builder,
-  var activity: Activity? = null,
+  var activity: ComponentActivity? = null,
   var fragment: Fragment? = null,
+
   var init: (TouchPrompt.(MaterialTapTargetPrompt.Builder) -> Unit)
 ) : MaterialTapTargetPrompt.PromptStateChangeListener {
 
@@ -90,6 +119,7 @@ class TouchPrompt(
 
   private fun markShown() {
     markSingleShotDone(context, singleShotID)
+    showNext()
   }
 
   var primaryText: CharSequence? = null
@@ -101,7 +131,7 @@ class TouchPrompt(
 
   var primaryTextID: Int? = null
     set(value) {
-      setPrimaryText(value!!)
+      builder.setPrimaryText(value!!)
       field = value
     }
 
@@ -112,7 +142,7 @@ class TouchPrompt(
 
   var secondaryTextID: Int? = null
     set(value) {
-      setSecondaryText(value!!)
+      builder.setSecondaryText(value!!)
       field = value
     }
 
@@ -126,10 +156,7 @@ class TouchPrompt(
   fun setTargetPosition(x: Float, y: Float) = builder.setTarget(x, y)
 
   var targetID: Int? = null
-    set(value) {
-      if (value != null)
-        builder.setTarget(value)
-    }
+
 
   var initialDelay: Long? = null
 
@@ -160,6 +187,8 @@ class TouchPrompt(
       getPrefs(context).edit().clear().commit()
     }
 
+    @SuppressLint("StaticFieldLeak")
+    var currentPrompt: TouchPrompt? = null
   }
 
   var prompt: MaterialTapTargetPrompt? = null
@@ -168,9 +197,24 @@ class TouchPrompt(
     init(builder)
     builder.setPromptStateChangeListener(this)
 
-    if (initialDelay != null) {
-      (activity?.findViewById(android.R.id.content) ?: fragment!!.view)?.run {
-        postDelayed(::nativeShow, initialDelay!!)
+    if (serial) {
+      currentPrompt?.also {
+        //append this prompt to the chain and return
+        var p = it
+        while (p.nextPrompt != null) p = p.nextPrompt!!
+        p.nextPrompt = this@TouchPrompt
+        return this@TouchPrompt
+      }
+
+      //otherwise set this as the current prompt
+      currentPrompt = this
+    }
+
+    if (sequence == null) {
+      (activity?.findViewById(android.R.id.content) ?: fragment!!.view)?.also { v ->
+        initialDelay?.also { delay ->
+          v.postDelayed(::nativeShow, delay)
+        } ?: v.post(::nativeShow)
       }
     } else {
       nativeShow()
@@ -180,13 +224,46 @@ class TouchPrompt(
   }
 
   private fun nativeShow() {
+    log.trace("nativeShow() ${builder.primaryText} lifecycle: $lifecycle ${lifecycle.currentState}")
+
+    if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return showNext()
+
+    targetID?.also {
+      builder.setTarget(it)
+    }
 
     onBeforeShow?.invoke()
 
-    prompt = showFor?.run {
-      builder.showFor(this)
-    } ?: builder.show()
+    prompt = builder.create()
+    log.trace("prompt: $prompt view: ${builder.targetView} isVisible: ${builder.targetView?.visibility == View.VISIBLE}")
 
+
+    prompt?.run {
+      if (sequence != null) {
+        if (showFor != null)
+          sequence!!.addPrompt(this, showFor!!)
+        else
+          sequence!!.addPrompt(this)
+
+      } else {
+        if (showFor != null)
+          showFor(showFor!!)
+        else
+          show()
+      }
+    } ?: showNext() //failed to display this prompt so show the next instead
+
+  }
+
+  private var nextPrompt: TouchPrompt? = null
+
+  private fun showNext() {
+    if (serial) {
+      currentPrompt = null
+      nextPrompt?.run {
+        show()
+      }
+    }
   }
 
   fun dismiss() {

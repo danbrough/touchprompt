@@ -4,8 +4,8 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import danbroid.touchprompt.TouchPrompt
+import danbroid.touchprompt.fragmentTouchPrompt
 import danbroid.touchprompt.touchPrompt
-import danbroid.touchprompt.touchSequence
 
 
 /**
@@ -34,10 +34,49 @@ class FirstFragment : BaseFragment("First Fragment") {
       }
     }
 
+    var count = 0
+
     addTest("Showing a fragment prompt") {
-      touchPrompt {
-        primaryText = "Fragment prompt"
+      count++
+      var title = "Fragment prompt: $count"
+      Toast.makeText(context!!, "Showing fragment prompt:$count in 2 seconds", Toast.LENGTH_SHORT)
+        .show()
+      fragmentTouchPrompt {
+        primaryText = title
         setTargetPosition(100f, 40f)
+        initialDelay = 2000
+      }
+    }
+
+    addTest("Activity Prompt") {
+      Toast.makeText(context!!, "Showing activity prompt in 2 seconds", Toast.LENGTH_SHORT).show()
+      touchPrompt {
+        primaryText = "The search button"
+        secondaryText = "In case you forgot about it"
+        initialDelay = 2000
+        targetID = R.id.action_search
+      }
+    }
+
+    addTest("Serial prompts") { button ->
+      Toast.makeText(context!!, "Showing 3 prompts in a row", Toast.LENGTH_SHORT).show()
+
+      touchPrompt {
+        primaryText = "First prompt"
+        targetID = R.id.action_search
+        initialDelay = 1000
+      }
+
+      //this will show unless the fragment is replaced
+      touchPrompt {
+        primaryText = "Second prompt"
+        target = button
+      }
+
+      //this will always show
+      activity!!.touchPrompt {
+        primaryText = "Third prompt"
+        targetID = R.id.action_search
       }
     }
 
@@ -49,19 +88,6 @@ class FirstFragment : BaseFragment("First Fragment") {
       }
     }
 
-    val doOnClick: (View.() -> View) = {
-      this
-    }
-    val b1 = addTest("B1").doOnClick()
-    val b2 = addTest("B2").doOnClick()
-
-    touchPrompt {
-      primaryText = "B1"
-      target = b1
-    }.touchPrompt {
-      primaryText = "B2"
-      target = b2
-    }
   }
 
 
