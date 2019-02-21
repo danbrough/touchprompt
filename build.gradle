@@ -7,8 +7,8 @@ buildscript {
     kotlin_version = '1.3.21'
     //coroutines_version = '1.1.1'
     sdk_version = 28
-    version_code = 7
-    version_name = "v0.007"
+    version_code = 8
+    version_name = "v0.008"
     min_sdk_version = 15
   }
 

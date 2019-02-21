@@ -34,7 +34,14 @@ fun Fragment.fragmentTouchPrompt(
 
 
 fun Fragment.touchPrompt(singleShotID: Any? = null, serial: Boolean = true, init: TouchPromptInit) =
-  showTouchPrompt(context!!, singleShotID, activity = this.activity,fragment = this, serial = serial, init = init)
+  showTouchPrompt(
+    context!!,
+    singleShotID,
+    activity = this.activity,
+    fragment = this,
+    serial = serial,
+    init = init
+  )
 
 var themeResourceID: Int = 0
 
@@ -224,9 +231,13 @@ class TouchPrompt(
   }
 
   private fun nativeShow() {
-    log.trace("nativeShow() ${builder.primaryText} lifecycle: $lifecycle ${lifecycle.currentState}")
+    log.trace("nativeShow() ${builder.primaryText}")
 
-    if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return showNext()
+    if (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) ||
+      fragment?.userVisibleHint == false ||
+      fragment?.isVisible == false
+    ) return showNext()
+
 
     targetID?.also {
       builder.setTarget(it)
@@ -235,8 +246,11 @@ class TouchPrompt(
     onBeforeShow?.invoke()
 
     prompt = builder.create()
-    log.trace("prompt: $prompt view: ${builder.targetView} isVisible: ${builder.targetView?.visibility == View.VISIBLE}")
 
+    if (prompt == null) {
+      log.debug("failed to create prompt")
+      return showNext()
+    }
 
     prompt?.run {
       if (sequence != null) {
@@ -251,7 +265,7 @@ class TouchPrompt(
         else
           show()
       }
-    } ?: showNext() //failed to display this prompt so show the next instead
+    }
 
   }
 
