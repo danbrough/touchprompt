@@ -4,14 +4,15 @@ import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import danbroid.touchprompt.fragmentTouchPrompt
 import danbroid.touchprompt.touchPrompt
 
 class SecondFragment : BaseFragment("Second Fragment") {
   override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
     tests.setOnTouchListener { _, event ->
-      touchPrompt {
-        primaryText = "Clicked at ${event.x},${event.y}"
+      fragmentTouchPrompt {
+        primaryText = "Fragment prompt at %.2f,%.2f".format(event.x, event.y)
         setTargetPosition(event.x, event.y)
       }
       true

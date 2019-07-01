@@ -64,23 +64,29 @@ fun showTouchPrompt(
 ): TouchPrompt? {
   if (TouchPrompt.singleShotDone(context, singleShotID?.toString())) return null
 
-  val builder = if (activity != null) MaterialTapTargetPrompt.Builder(activity, themeResourceID)
-  else MaterialTapTargetPrompt.Builder(fragment!!)
+  try {
+    val builder = if (activity != null) MaterialTapTargetPrompt.Builder(activity, themeResourceID)
+    else MaterialTapTargetPrompt.Builder(fragment!!)
 
-  val prompt = TouchPrompt(
-    singleShotID?.toString(),
-    context,
-    fragment?.lifecycle ?: activity!!.lifecycle,
-    serial,
-    sequence,
-    builder,
-    activity,
-    fragment,
-    init
-  )
+    val prompt = TouchPrompt(
+      singleShotID?.toString(),
+      context,
+      fragment?.lifecycle ?: activity!!.lifecycle,
+      serial,
+      sequence,
+      builder,
+      activity,
+      fragment,
+      init
+    )
 
-  prompt.show()
-  return prompt
+    prompt.show()
+    return prompt
+
+  } catch (err: Exception) {
+    log.error(err.message, err)
+  }
+  return null
 }
 
 

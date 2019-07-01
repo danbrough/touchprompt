@@ -18,7 +18,7 @@ to your maven repositories.
 
 Include: 
 
-`implementation "com.github.danbrough.touchprompt:mtt:v0.005"`
+`implementation "com.github.danbrough.touchprompt:mtt:v0.009"`
 
 in your build.gradle.
 
